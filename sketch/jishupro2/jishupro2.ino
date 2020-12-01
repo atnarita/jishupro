@@ -10,11 +10,10 @@ void loop()
   x = analogRead(3);
   y = analogRead(4);
   z = analogRead(5);
-  Serial.print("X:");
   Serial.print(x);
-  Serial.print("\tY:");
+  Serial.print(" ");
   Serial.print(y);
-  Serial.print("\tZ:");
+  Serial.print(" ");
   Serial.println(z);
   delay(50);
 }
