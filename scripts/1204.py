@@ -9,10 +9,11 @@ import time
 import struct
 import math
 
-x_acc = np.zeros((20),dtype=np.float32)
-y_acc = np.zeros((20),dtype=np.float32)
-z_acc = np.zeros((20),dtype=np.float32)
-time_list = np.zeros((20),dtype=np.float32)
+N = 20
+x_acc = np.zeros((N),dtype=np.float32)
+y_acc = np.zeros((N),dtype=np.float32)
+z_acc = np.zeros((N),dtype=np.float32)
+time_list = np.zeros((N),dtype=np.float32)
 
 x_acc_zero = 0
 y_acc_zero = 0
@@ -20,6 +21,7 @@ z_acc_zero = 0
 
 dist = 0.0
 step_time = 0
+
 
 def acc_queue_for_x(src, acc):
     global x_acc_zero
@@ -55,24 +57,18 @@ def distance(src, time):
     sigma_y = np.std(y_acc[-5:])
     sigma_z = np.std(z_acc[-5:])
 
-    acc_ave = np.average(src[-3:])
-    delta_t = time[-1] - time[-3]
-    if sigma_z >= 0.8:
-        dist += src[-1] * delta_t * delta_t
+    acc_ave = np.average(src[-5:])
+    delta_t = time[-1] - time[-5]
+    if sigma_z >= 0.5:
+        dist += acc_ave * (delta_t**2)
 
-step_flag = 0
 def step():
     global step_time
-    global step_flag
     sigma_x = np.std(x_acc[-5:])   # 標準偏差の計算
     sigma_y = np.std(y_acc[-5:])
     sigma_z = np.std(z_acc[-5:])
-    acc_ave = np.average(x_acc[-3:])
-    if (math.sqrt(sigma_z**2 + sigma_y**2 + sigma_z**2) >= 0.5) and (acc_ave > 0) and (acc_ave > 1) and step_flag == 0:
+    if math.sqrt(sigma_z**2 + sigma_y**2 + sigma_z**2) >= 10.0:
         step_time += 1
-        step_flag = 1
-    if x_acc[-1] < 0:
-        step_flag = 0
 
 
 
@@ -103,6 +99,19 @@ def console_print(x_acc,y_acc,z_acc):
     # print("S/N比\tx:" + str(sn_x) + "\ty:" + str(sn_y) + "\tz:" + str(sn_z) + "[dB]")
     #print(np.transpose(data))
 
+def fft(src,time_list):
+    F = np.fft.fft(src)
+    Amp = np.abs(F)
+    freq = np.linspace(0, time_list[-1] - time_list[0], N)
+
+    # 正規化 + 交流成分2倍
+    F = F/(N/2)
+    F[0] = F[0]/2
+
+    return freq, Amp
+
+
+
 def main():
     #グローバル変数を関数の中で使う
     global x_acc
@@ -114,7 +123,7 @@ def main():
     global time_list
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB1",9600)
+    ser = serial.Serial("/dev/ttyUSB0",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
@@ -148,7 +157,7 @@ def main():
             line = ser.readline()    # 行終端まで読み込む
             line = line.decode()     # byteからstringに変換
             ser_data = list(map(int, line.rstrip().split()))
-            # print(ser_data)
+            print(ser_data)
 
             #それぞれキュー操作
             x_acc = acc_queue_for_x(x_acc, ser_data[0])
@@ -162,16 +171,22 @@ def main():
             print("time = ",time.time() - start_time)
             # 移動速度を出す
 
+            freq_z_acc, amp_z_acc = fft(z_acc, time_list)
+
             # プロットの準備とプロット
-            time_axis = time_list[:] - time.time()
+            # time_axis = time_list[:] - time.time()
+            # # fo_x_acc = np.fft.fft(x_acc)
+            # # fo_y_acc = np.fft.fft(y_acc)
+            # # fo_z_acc = np.fft.fft(z_acc)
+            # # fo_z_acc = fo_z_acc/(N/2)
             ax_1.clear()
-            ax_1.plot(time_axis, x_acc[:], color="r",label="x")
-            ax_1.plot(time_axis, y_acc[:], color="g",label='y')
-            ax_1.plot(time_axis, z_acc[:], color="b",label='z')
-            ax_1.set_xlabel("time[s]")
-            ax_1.set_ylabel("[m/s^2]")
+            # ax_1.plot(time_axis, x_acc, color="r",label="x")
+            # ax_1.plot(time_axis, y_acc, color="g",label='y')
+            ax_1.plot(freq_z_acc, amp_z_acc, color="b",label='z')
+            ax_1.set_xlabel("Frequency")
+            ax_1.set_ylabel("Amplitude")
             ax_1.legend()
-            ax_1.set_ylim([-10,10])
+            #ax_1.set_ylim([-10,10])
 
             plt.pause(0.01)
 

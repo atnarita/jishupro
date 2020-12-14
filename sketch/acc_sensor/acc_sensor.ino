@@ -1,20 +1,15 @@
 void setup()
 {
   Serial.begin(9600);
-  Serial.println("start");
+  //Serial.println("start");
 }
 
 void loop()
 {
   long x, y, z;
-  x = analogRead(3);
-  y = analogRead(4);
-  z = analogRead(5);
-//  String acc_sen = ;
+  x = analogRead(4);
+  y = analogRead(5);
+  z = analogRead(6);
   Serial.println((String)x+" "+y+" "+z);
-//  Serial.print(" ");
-//  Serial.print(y);
-//  Serial.print(" ");
-//  Serial.println(z);
   delay(100);
 }
