@@ -8,6 +8,7 @@ import datetime
 import time
 import struct
 import math
+import nn
 
 # 単位は[m],[s]
 time_list = np.zeros((30),dtype=np.float32)
@@ -27,7 +28,6 @@ distance_array = np.zeros((30,3),dtype=np.float32)
 distance_list = np.zeros((3),dtype=np.float32)
 
 step_time = 0
-
 
 def acc_func():
     global acc_src
@@ -70,7 +70,7 @@ def time_func():
     global start_time
     global time_list
 
-    time_list = np.append(time_list[1:], time.time()-start_time)
+    time_list = np.append(time_list[1:], time.time())
 
 
 
@@ -89,9 +89,11 @@ def main():
     global distance_array
     global distance_list
     global step_time
+    global count_loop
+    path = 0
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB1",9600)
+    ser = serial.Serial("/dev/ttyUSB0",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
@@ -115,13 +117,16 @@ def main():
                 print("let's start")
                 break
 
-    # fig = plt.figure()
-    # ax_1 = fig.add_subplot(111)
+    fig = plt.figure()
+    ax_1 = fig.add_subplot(111)
 
-    file_acc = "training_acc.txt"
-    file_dis = "training_dis.txt"
-    fileobj_acc = open(file_acc, "w", encoding = "utf_8")
-    fileobj_dis = open(file_dis, "w", encoding = "utf_8")
+
+    w1 = np.array(np.loadtxt('data/w1.txt', dtype='float32'))
+    w2 = np.array(np.loadtxt('data/w2.txt', dtype='float32'))
+    lay1 = nn.start_layer(90,60)
+    lay2 = nn.last_layer(60,1)
+    lay1.weight = w1
+    lay2.weight = w2
 
     start_time = time.time()
     count = 1
@@ -144,48 +149,42 @@ def main():
             # ターミナルに結果表示
             # console_print(x_acc, y_acc, z_acc)
             # 開始後何秒経過したか
-            print("time = ",time.time() - start_time)
+            #print("time = ",time.time() - start_time)
             # 移動速度を出す
             # print("acc_list={}".format(acc_list))
             # print("speed_list={}".format(speed_list))
             # print("distance_list={}".format(distance_list))
 
-            # # プロットの準備とプロット
-            # time_axis = time_list[:] - time.time()
-            # ax_1.clear()
-            # ax_1.plot(time_axis, x_acc[:], color="r",label="x")
-            # ax_1.plot(time_axis, y_acc[:], color="g",label='y')
-            # ax_1.plot(time_axis, z_acc[:], color="b",label='z')
-            # ax_1.set_xlabel("time[s]")
-            # ax_1.set_ylabel("[m/s^2]")
-            # ax_1.legend()
-            # ax_1.set_ylim([-10,10])
-            #
-            # plt.pause(0.01)
+            # プロットの準備とプロット
+            time_axis = time_list[:] - time.time()
+            ax_1.clear()
+            ax_1.plot(time_axis, acc_array[:,0], color="r",label="x")
+            ax_1.plot(time_axis, acc_array[:,1], color="g",label='y')
+            ax_1.plot(time_axis, acc_array[:,2], color="b",label='z')
+            ax_1.set_xlabel("time[s]")
+            ax_1.set_ylabel("[m/s^2]")
+            ax_1.legend()
+            ax_1.set_ylim([-10,10])
 
-            fileobj_acc.write(str(acc_list[0])+" "+str(acc_list[1])+" "+str(acc_list[2])+" ")
+            plt.pause(0.01)
+
             if count%30==0:
-                print("\007")
-                ans_dis = input("how far did you move ? : ")
-                fileobj_acc.write("\n")
-                fileobj_dis.write(ans_dis)
-                fileobj_dis.write("\n")
-                fin = input("continue ? (y or n): ")
-                if fin == "n":
-                    break
-
+                print("\007",end="")
+                output = lay1.forward(acc_array.reshape(90))
+                output = lay2.forward(output)
+                path += float(output)
+                print("path = {}".format(path))
+                print("time = {}".format(time.time()-start_time))
 
 
             count += 1
-            time.sleep(0.1)
+            #time.sleep(0.1)
 
 
     except KeyboardInterrupt:
         ser.close()
         print("Thank you...")
 
-    fileobj_acc.close()
-    fileobj_dis.close()
 
 
 if __name__ == '__main__'    :

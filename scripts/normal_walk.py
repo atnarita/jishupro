@@ -91,7 +91,7 @@ def main():
     global step_time
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB1",9600)
+    ser = serial.Serial("/dev/ttyUSB0",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
@@ -115,12 +115,9 @@ def main():
                 print("let's start")
                 break
 
-    # fig = plt.figure()
-    # ax_1 = fig.add_subplot(111)
+    fig = plt.figure()
+    ax_1 = fig.add_subplot(111)
 
-
-    w1 = np.array(np.loadtxt('w1.txt', dtype='float32'))
-    w2 = np.array(np.loadtxt('w2.txt', dtype='float32'))
 
     start_time = time.time()
     count = 1
@@ -143,48 +140,29 @@ def main():
             # ターミナルに結果表示
             # console_print(x_acc, y_acc, z_acc)
             # 開始後何秒経過したか
-            print("time = ",time.time() - start_time)
+            #print("time = ",time.time() - start_time)
             # 移動速度を出す
-            # print("acc_list={}".format(acc_list))
-            # print("speed_list={}".format(speed_list))
-            # print("distance_list={}".format(distance_list))
+            print("acc_list={}".format(acc_list))
+            print("speed_list={}".format(speed_list))
+            print("distance_list={}".format(distance_list))
 
             # # プロットの準備とプロット
-            # time_axis = time_list[:] - time.time()
-            # ax_1.clear()
-            # ax_1.plot(time_axis, x_acc[:], color="r",label="x")
-            # ax_1.plot(time_axis, y_acc[:], color="g",label='y')
-            # ax_1.plot(time_axis, z_acc[:], color="b",label='z')
-            # ax_1.set_xlabel("time[s]")
-            # ax_1.set_ylabel("[m/s^2]")
-            # ax_1.legend()
-            # ax_1.set_ylim([-10,10])
-            #
-            # plt.pause(0.01)
+            time_axis = time_list[15:] - time.time()
+            ax_1.clear()
+            ax_1.plot(time_axis, acc_array[15:,0], color="r",label="x")
+            ax_1.plot(time_axis, acc_array[15:,1], color="g",label='y')
+            ax_1.plot(time_axis, acc_array[15:,2], color="b",label='z')
+            ax_1.set_xlabel("time[s]")
+            ax_1.set_ylabel("[m/s^2]")
+            ax_1.legend()
+            ax_1.set_ylim([-10,10])
 
-            fileobj_acc.write(str(acc_list[0])+" "+str(acc_list[1])+" "+str(acc_list[2])+" ")
-            if count%30==0:
-                print("\007")
-                ans_dis = input("how far did you move ? : ")
-                fileobj_acc.write("\n")
-                fileobj_dis.write(ans_dis)
-                fileobj_dis.write("\n")
-                fin = input("continue ? (y or n): ")
-                if fin == "n":
-                    break
-
-
-
-            count += 1
-            time.sleep(0.1)
+            plt.pause(0.01)
 
 
     except KeyboardInterrupt:
         ser.close()
         print("Thank you...")
-
-    fileobj_acc.close()
-    fileobj_dis.close()
 
 
 if __name__ == '__main__'    :
