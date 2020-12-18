@@ -15,11 +15,6 @@ void setup()
   Serial.begin(9600);
 }
 
-void buzz_dis()
-{
-  
-}
-
 void loop()
 {
   // 1 loop takes 100[ms]
@@ -28,7 +23,7 @@ void loop()
   x = analogRead(4);
   y = analogRead(5);
   z = analogRead(6);
-  Serial.println((String)x+" "+y+" "+z);
+ 
   
    // calculate distance
   digitalWrite(TRIG_PIN, LOW);
@@ -57,4 +52,5 @@ void loop()
     digitalWrite(BUZZER_PIN, HIGH);
     delay(100);
   }
+  Serial.println((String)x+" "+y+" "+z+" "+distance);
 }

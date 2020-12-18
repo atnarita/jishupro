@@ -240,8 +240,8 @@ def main():
         # th2.start()
 
         pr1 = multiprocessing.Process(target=update, args=())
-        pr2 = multiprocessing.Process(target=drawing, args=())
-        pr2.start()
+        # pr2 = multiprocessing.Process(target=drawing, args=())
+        # pr2.start()
         pr1.start()
 
     except KeyboardInterrupt:
