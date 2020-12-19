@@ -91,7 +91,7 @@ def main():
     global step_time
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB0",9600)
+    ser = serial.Serial("/dev/ttyUSB1",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
@@ -106,7 +106,7 @@ def main():
             line = ser.readline()    # 行終端まで読み込む
             line = line.decode()     # byteからstringに変換
             ser_data = list(map(int, line.rstrip().split()))
-            if len(ser_data) != 3:
+            if len(ser_data) != 4:
                 print("sorry, one more time...")
             else:
                 x_acc_zero = ser_data[0]

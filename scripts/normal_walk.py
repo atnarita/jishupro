@@ -91,7 +91,7 @@ def main():
     global step_time
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB0",9600)
+    ser = serial.Serial("/dev/ttyUSB1",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
@@ -106,7 +106,7 @@ def main():
             line = ser.readline()    # 行終端まで読み込む
             line = line.decode()     # byteからstringに変換
             ser_data = list(map(int, line.rstrip().split()))
-            if len(ser_data) != 3:
+            if len(ser_data) != 4:
                 print("sorry, one more time...")
             else:
                 x_acc_zero = ser_data[0]
@@ -147,11 +147,11 @@ def main():
             print("distance_list={}".format(distance_list))
 
             # # プロットの準備とプロット
-            time_axis = time_list[15:] - time.time()
+            time_axis = time_list[:] - time.time()
             ax_1.clear()
-            ax_1.plot(time_axis, acc_array[15:,0], color="r",label="x")
-            ax_1.plot(time_axis, acc_array[15:,1], color="g",label='y')
-            ax_1.plot(time_axis, acc_array[15:,2], color="b",label='z')
+            ax_1.plot(time_axis, acc_array[:,0], color="r",label="x")
+            ax_1.plot(time_axis, acc_array[:,1], color="g",label='y')
+            ax_1.plot(time_axis, acc_array[:,2], color="b",label='z')
             ax_1.set_xlabel("time[s]")
             ax_1.set_ylabel("[m/s^2]")
             ax_1.legend()

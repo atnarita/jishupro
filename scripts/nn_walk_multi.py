@@ -38,7 +38,7 @@ lay2.weight = np.array(np.loadtxt('data/w2.txt', dtype='float32'))
 
 start_time = 0
 count = 1
-ser = serial.Serial("/dev/ttyUSB0",9600)
+ser = serial.Serial("/dev/ttyUSB1",9600)
 
 
 def acc_func():
@@ -83,44 +83,6 @@ def time_func():
     global time_list
 
     time_list = np.append(time_list[1:], time.time())
-
-def drawing():
-    global time_list
-    global start_time
-    global acc_src
-    global acc_array
-    global acc_list
-    global x_acc_zero
-    global y_acc_zero
-    global z_acc_zero
-    global speed_arra
-    global speed_list
-    global distance_array
-    global distance_list
-    global step_time
-    global count_loop
-    global ser
-
-    print("thread(drawing) : start")
-
-    fig = plt.figure()
-    ax_1 = fig.add_subplot(111)
-
-    while(True):
-        # プロットの準備とプロット
-        time_axis = time_list[:] - time.time()
-        print("Hi!")
-        ax_1.clear()
-        ax_1.plot(time_axis, acc_array[:,0], color="r",label="x")
-        ax_1.plot(time_axis, acc_array[:,1], color="g",label='y')
-        ax_1.plot(time_axis, acc_array[:,2], color="b",label='z')
-        ax_1.set_xlabel("time[s]")
-        ax_1.set_ylabel("[m/s^2]")
-        ax_1.legend()
-        ax_1.set_ylim([-10,10])
-
-        plt.pause(0.01)
-
 
 
 def update():
@@ -209,7 +171,7 @@ def main():
     global ser
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB0",9600)
+    #ser = serial.Serial("/dev/ttyUSB1",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
@@ -224,7 +186,7 @@ def main():
             line = ser.readline()    # 行終端まで読み込む
             line = line.decode()     # byteからstringに変換
             ser_data = list(map(int, line.rstrip().split()))
-            if len(ser_data) != 3:
+            if len(ser_data) != 4:
                 print("sorry, one more time...")
             else:
                 x_acc_zero = ser_data[0]
@@ -239,15 +201,45 @@ def main():
         # th1.start()
         # th2.start()
 
-        pr1 = multiprocessing.Process(target=update, args=())
+        pr1 = threading.Thread(target=update, args=())
         # pr2 = multiprocessing.Process(target=drawing, args=())
         # pr2.start()
         pr1.start()
 
+        fig = plt.figure()
+        ax_1 = fig.add_subplot(111)
+        time_axis = time_list[:] - time.time()
+        lines_x, = ax_1.plot(time_axis, acc_array[:,0], color="r",label="x")
+        lines_y, = ax_1.plot(time_axis, acc_array[:,1], color="g",label='y')
+        lines_z, = ax_1.plot(time_axis, acc_array[:,2], color="b",label='z')
+        ax_1.set_xlabel("time[s]")
+        ax_1.set_ylabel("[m/s^2]")
+        ax_1.set_ylim([-10,10])
+        ax_1.set_xlim([-3.0, 0.0])
+        ax_1.legend()
+
+        while(True):
+            # プロットの準備とプロット
+            time_axis = time_list[:] - time.time()
+            # print(time_axis)
+            #ax_1.clear()
+            lines_x.set_data(time_axis, acc_array[:,0])
+            lines_y.set_data(time_axis, acc_array[:,1])
+            lines_z.set_data(time_axis, acc_array[:,2])
+
+            # ax_1.set_xlabel("time[s]")
+            # ax_1.set_ylabel("[m/s^2]")
+            # ax_1.legend()
+            # ax_1.set_ylim([-10,10])
+
+            plt.pause(0.01)
+
+
+
+
     except KeyboardInterrupt:
         ser.close()
         pr1.join()
-        pr2.join()
         print("\nThank you...")
 
 
