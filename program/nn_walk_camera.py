@@ -186,16 +186,17 @@ def update():
         print("acc_list_modi= {}".format(acc_list_modi)) # 移動加速度を出す
         print("speed_list = {}".format(speed_list)) # 移動速度を出す
         print("distance_list = {}".format(distance_list)) # 積分から得た移動速度を出す
-        print("step = {}".format(step_num))
 
         # 30フレーム（約3病）に一回はNNで距離を新しくする
         if count%30==0:
             print("\007",end="")
-            output = lay1.forward(acc_array.reshape(90))
+            output = lay1.forward(acc_array_modi.reshape(90))
             output = lay2.forward(output)
             path += float(output)
 
-        print("path(NN) = {}\n".format(path))
+        print("path(NN) = {}".format(path))
+        print("step = {}".format(step_num))
+        print("\n")
 
         count += 1
         time.sleep(0.1) # 0.1[s]待つ
