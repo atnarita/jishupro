@@ -33,8 +33,9 @@ void loop()
   digitalWrite(TRIG_PIN, LOW);
 
   duration = pulseIn(ECHO_PIN, HIGH);
+  double v = (331.5 + 0.6 * 15)/10000;
   if(duration>0) {
-    distance = (duration*.0343)/2; // ultrasonic speed is 340m/s = 0.034cm/us
+    distance = (duration * v)/2; // ultrasonic speed is 340m/s = 0.034cm/us
   }
 
   // 40  < distance        ... do nothing

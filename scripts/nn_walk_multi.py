@@ -19,6 +19,7 @@ acc_src = np.zeros((3),dtype=np.float32)
 acc_array = np.zeros((30,3),dtype=np.float32)
 acc_list = np.zeros((3),dtype=np.float32)
 x_acc_zero = 0
+
 y_acc_zero = 0
 z_acc_zero = 0
 
