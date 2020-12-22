@@ -38,6 +38,8 @@ distance_list = np.zeros((3),dtype=np.float32) # 1フレームでの移動距離
 
 step_time = 0 # 歩数
 obstacle = 500 # 障害物との距離
+path = 0 # NNを用いたときの移動距離
+vel = 0 # NNをもちいたときの移動速度
 
 lay1 = nn.start_layer(90,60)
 lay2 = nn.last_layer(60,1)
@@ -48,8 +50,8 @@ count = 1 # 何フレーム目なのかを表す
 step_num = 0 # 歩数
 step_flag = 0 # 歩行状態
 
-#ser = serial.Serial("/dev/ttyUSB0",9600) # こっちになることもある
-ser = serial.Serial("/dev/ttyUSB1",9600) # serial通信
+ser = serial.Serial("/dev/ttyUSB0",9600) # こっちになることもある
+#ser = serial.Serial("/dev/ttyUSB1",9600) # serial通信
 
 
 def acc_func():
@@ -158,8 +160,8 @@ def update():
     global ser
     global obstacle
     global count
-
-    path = 0 # NNを用いたときの移動距離
+    global path
+    global vel
 
     print("thread(update) : start")
     start_time = time.time()
@@ -193,6 +195,7 @@ def update():
             output = lay1.forward(acc_array_modi.reshape(90))
             output = lay2.forward(output)
             path += float(output)
+            vel = float(output) / 3
 
         print("path(NN) = {}".format(path))
         print("step = {}".format(step_num))
@@ -224,6 +227,7 @@ def main():
     global count_loop
     global ser
     global obstacle
+    global step
 
 
     print("connected")
@@ -276,16 +280,20 @@ def main():
             # カメラ画像をwindowに表示
             ret, frame = capture.read()
 
+            noti_text = str(((vel*3.4)//0.01)/100) + "[km/h]    " + str(step_num)+ "step"
             # 40 <  (障害物との距離)       ... 何もしない
             # 15 <= (障害物との距離) <= 40 ... 警告
             #       (障害物との距離) <  15 ... 危険を知らせる
             if 15 <= obstacle and obstacle <= 40 :
-                text = str(obstacle) + "[cm]. Take Care!"
-                cv2.putText(frame, text, (0, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 255), 5, 8)
+                warn_text = str(obstacle) + "[cm]. Take Care!"
+                cv2.putText(frame, noti_text, (0, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 0, 0), 5, 8)
+                cv2.putText(frame, warn_text, (100, 400), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 255), 5, 8)
             elif obstacle < 15:
                 text = str(obstacle) + "[cm]. Dangerous!"
-                cv2.putText(frame, text, (0, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 0, 255), 5, 8)
+                cv2.putText(frame, noti_text, (0, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 0, 0), 5, 8)
+                cv2.putText(frame, warn_text, (100, 400), cv2.FONT_HERSHEY_PLAIN, 3, (0, 0, 255), 5, 8)
             else:
+                cv2.putText(frame, noti_text, (0, 50), cv2.FONT_HERSHEY_PLAIN, 3, (0, 0, 0), 5, 8)
                 pass
 
             cv2.imshow("Capture", frame)
@@ -293,6 +301,19 @@ def main():
             if c == 27:
                 capture.release()
                 cv2.destroyAllWindows()
+                while True:
+                    img = cv2.imread('data/white.jpg')
+
+                    re_text_path = "You walked for about " + str(path) + "[m]"
+                    re_text_step = "The number of steps is " + str(step_num)
+                    re_text_cal = str((time.time()-start_time)/3600 * 55 * 2) + "[kcal] was burned"
+                    cv2.putText(img, re_text_path, (0, 50), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
+                    cv2.putText(img, re_text_step, (0, 150), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
+                    cv2.putText(img, re_text_cal, (0, 250), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
+                    cv2.imshow("Result",img)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
+                    break
                 break
 
 
