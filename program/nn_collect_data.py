@@ -91,7 +91,8 @@ def main():
     global step_time
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB1",9600)
+    ser = serial.Serial("/dev/ttyUSB0",9600)
+    #ser = serial.Serial("/dev/ttyUSB1",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
@@ -120,12 +121,11 @@ def main():
 
     file_acc = "data/training_acc.txt"
     file_dis = "data/training_dis.txt"
-    fileobj_acc = open(file_acc, "w", encoding = "utf_8")
-    fileobj_dis = open(file_dis, "w", encoding = "utf_8")
+    fileobj_acc = open(file_acc, "a", encoding = "utf_8")
+    fileobj_dis = open(file_dis, "a", encoding = "utf_8")
 
     start_time = time.time()
     count = 1
-
     try:
         while(True):
             # シリアルデータを受信して距離データを取得
@@ -166,7 +166,7 @@ def main():
             fileobj_acc.write(str(acc_list[0])+" "+str(acc_list[1])+" "+str(acc_list[2])+" ")
             if count%30==0:
                 print("\007")
-                ans_dis = input("how far did you move ? : ")
+                ans_dis = input(str(count//30) + ". how far did you move ? : ")
                 fileobj_acc.write("\n")
                 fileobj_dis.write(ans_dis)
                 fileobj_dis.write("\n")

@@ -42,15 +42,15 @@ void loop()
   // 15 <= distance <= 40  ...intermittent sound
   //       distance < 15   ... continuing sound
   if(distance > 40) {
-    digitalWrite(BUZZER_PIN, LOW);
+    //digitalWrite(BUZZER_PIN, LOW);
     delay(100);
   } else if (distance <= 40 && 15 <= distance) {
-    digitalWrite(BUZZER_PIN, HIGH);
+    //digitalWrite(BUZZER_PIN, HIGH);
     delay(100-100*(distance-15)/25);
-    digitalWrite(BUZZER_PIN, LOW);
+    //digitalWrite(BUZZER_PIN, LOW);
     delay(100*(distance-15)/25);
   } else {
-    digitalWrite(BUZZER_PIN, HIGH);
+    //digitalWrite(BUZZER_PIN, HIGH);
     delay(100);
   }
   Serial.println((String)x+" "+y+" "+z+" "+distance);
