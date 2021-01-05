@@ -32,6 +32,8 @@ z_acc_zero = 0
 
 speed_array = np.zeros((30,3),dtype=np.float32) # 30フレーム分の速度情報[m/s]
 speed_list = np.zeros((3),dtype=np.float32) # 今の速度[m/s]
+raise_leg = 0.0
+raise_leg_sum = 0.0
 
 distance_array = np.zeros((30,3),dtype=np.float32) # 30フレーム分の距離情報[m]
 distance_list = np.zeros((3),dtype=np.float32) # 1フレームでの移動距離[m]
@@ -66,11 +68,14 @@ def acc_func():
     global x_acc_zero
     global y_acc_zero
     global z_acc_zero
+    global raise_leg
 
     acc_list = np.array([(acc_src[0]-x_acc_zero)/(220/9.8), (acc_src[1]-y_acc_zero)/(220/9.8), (acc_src[2]-z_acc_zero)/(220/9.8)])
     acc_array = np.append(acc_array[1:], [acc_list], axis=0)
 
-    if np.std(acc_array[-5:,:]) < 0.5:
+    raise_leg = np.std(acc_array[:,0])+np.std(acc_array[:,1])+np.std(acc_array[:,2])
+
+    if np.std(acc_array[-5:,0])+np.std(acc_array[-5:,1])+np.std(acc_array[-5:,2]) < 0.3:
         acc_list_modi = np.zeros(3)
     else:
         acc_list_modi = acc_list
@@ -162,6 +167,8 @@ def update():
     global count
     global path
     global vel
+    global raise_leg
+    global raise_leg_sum
 
     print("thread(update) : start")
     start_time = time.time()
@@ -191,12 +198,14 @@ def update():
 
         # 30フレーム（約3病）に一回はNNで距離を新しくする
         if count%30==0:
-            print("\007",end="")
+            #print("\007",end="")
             output = lay1.forward(acc_array_modi.reshape(90))
             output = lay2.forward(output)
             path += float(output)
             vel = float(output) / 3
+            raise_leg_sum += raise_leg
 
+        print("raise? = {}".format(raise_leg_sum/count))
         print("path(NN) = {}".format(path))
         print("step = {}".format(step_num))
         print("\n")
@@ -224,10 +233,12 @@ def main():
     global distance_array
     global distance_list
     global step_time
-    global count_loop
+    global count
     global ser
     global obstacle
     global step
+    global raise_leg
+    global raise_leg_sum
 
 
     print("connected")
@@ -280,7 +291,7 @@ def main():
             # カメラ画像をwindowに表示
             ret, frame = capture.read()
 
-            noti_text = str(((vel*3.4)//0.01)/100) + "[km/h]    " + str(step_num)+ "step"
+            noti_text = str(((vel*3.4)//0.1)/10) + "[km/h] " + str((path//0.1)/10) + "m " + str(step_num)+ "step"
             # 40 <  (障害物との距離)       ... 何もしない
             # 15 <= (障害物との距離) <= 40 ... 警告
             #       (障害物との距離) <  15 ... 危険を知らせる
@@ -301,19 +312,24 @@ def main():
             if c == 27:
                 capture.release()
                 cv2.destroyAllWindows()
-                while True:
-                    img = cv2.imread('data/white.jpg')
+                #while True:
+                img = cv2.imread('data/white.jpg')
 
-                    re_text_path = "You walked for about " + str(path) + "[m]"
-                    re_text_step = "The number of steps is " + str(step_num)
-                    re_text_cal = str((time.time()-start_time)/3600 * 55 * 2) + "[kcal] was burned"
-                    cv2.putText(img, re_text_path, (0, 50), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
-                    cv2.putText(img, re_text_step, (0, 150), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
-                    cv2.putText(img, re_text_cal, (0, 250), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
-                    cv2.imshow("Result",img)
-                    cv2.waitKey(0)
-                    cv2.destroyAllWindows()
-                    break
+                cv2.namedWindow("img",cv2.WINDOW_NORMAL)
+                re_text_path = " You walked for about " + str((path//0.1)/10) + " [m]."
+                re_text_step = " The number of steps is " + str(step_num) + "."
+                re_text_cal = " " + str((((time.time()-start_time)/3600 * 55 * 2)//0.1)/10) + " [kcal] was burned."
+                cv2.putText(img, re_text_path, (0, 50), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
+                cv2.putText(img, re_text_step, (0, 150), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
+                cv2.putText(img, re_text_cal, (0, 250), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
+                if(raise_leg_sum//count < 0.8):
+                    re_text_raise = " Raise your legs and cheerfully !"
+                else:
+                    re_text_raise =  "Good!"
+                cv2.putText(img, re_text_raise, (0, 300), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 5, 8)
+                cv2.imshow("Result",img)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
                 break
 
 
@@ -332,7 +348,7 @@ def main():
         ser.close()
         capture.release()
         cv2.destroyAllWindows()
-        pr1.join()
+        th1.join()
         print("\nThank you...")
 
 
