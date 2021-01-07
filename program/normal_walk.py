@@ -91,7 +91,8 @@ def main():
     global step_time
 
     #シリアル通信
-    ser = serial.Serial("/dev/ttyUSB1",9600)
+    ser = serial.Serial("/dev/ttyUSB0",9600)
+    #ser = serial.Serial("/dev/ttyUSB1",9600)
     #ser = serial.Serial("/dev/ttyS4", 9600)
     print("connected")
 
