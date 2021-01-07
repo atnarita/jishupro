@@ -295,21 +295,27 @@ def main():
         while(True):
             # カメラ画像をwindowに表示
             ret, frame = capture.read()
+
+            # エッジ検出した後、Hough変換で直線を検出する
+            # ある程度水平で長い直線が検出されたら、"Take Care!"と出力する
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             edge = cv2.Canny(gray, 50,110)
             lines = cv2.HoughLinesP(edge,rho=1,theta=np.pi/180, threshold=20, minLineLength=100,maxLineGap=50)
 
+            # 水平線検出する
             cnt = 0
             for line in lines:
                 x1, y1, x2, y2 = line[0]
                 if abs(y1-y2) < 30 and (x1-x2)**2+(y1-y2)**2 > 300**2 and 330<y1 and y1<430:
                     red_lines_img = cv2.line(frame, (x1,y1), (x2,y2), (0,0,255), 3)
                     cv2.putText(frame, "Take Care!", (100, 450), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 255), 5, 8)
+                    print("\007")
                     break
                 if cnt ==10:
                     break
                 cnt += 1
 
+            # Numerical Integration (NI) と　Nural Network (NN) の結果を表示する
             noti_text_ni = " NI : "+str(((speed_list[2]*3.4)//0.1)/10) + "[km/h] " + str((distance_list[2]//0.1)/10) + "m "
             noti_text_nn = " NN : "+str(((vel*3.4)//0.1)/10) + "[km/h] " + str((path//0.1)/10) + "m "
             step_text = "The number of steps : " + str(step_num)
@@ -317,6 +323,7 @@ def main():
             cv2.putText(frame, noti_text_ni, (0, 50), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 3, 8)
             cv2.putText(frame, noti_text_nn, (0, 100), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 3, 8)
             cv2.putText(frame, step_text, (0, 200), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0), 3, 8)
+
             # 40 <  (障害物との距離)       ... 何もしない
             # 15 <= (障害物との距離) <= 40 ... 警告
             #       (障害物との距離) <  15 ... 危険を知らせる
@@ -329,22 +336,35 @@ def main():
             else:
                 pass
 
+            # 修飾したカメラ画像を表示
             cv2.imshow("Capture", frame)
+
             c = cv2.waitKey(2)
+
+            # 打鍵キーがEscならif文の中へ
             if c == 27:
-                capture.release()
+                # 今まで表示していた画面は消去
                 cv2.destroyAllWindows()
-                #while True:
+                capture.release()
+
+                # 新たな画面を用意
                 img = cv2.imread('data/white.jpg')
 
                 cv2.namedWindow("img",cv2.WINDOW_NORMAL)
+
                 cv2.putText(img, "Announcement of the results !", (10, 50), cv2.FONT_HERSHEY_TRIPLEX|cv2.FONT_ITALIC, 1.2, (100, 200, 200), 3, 8)
+
+                # 結果のテキストを用意
                 re_text_path = " You walked for about " + str((path//0.1)/10) + " [m]."
                 re_text_step = " The number of steps is " + str(step_num) + "."
                 re_text_cal = " " + str((((time.time()-start_time)/3600 * 55 * 2)//0.1)/10) + " [kcal] was burned."
+
+                # 結果を距離、速度、歩数の表示（NNをもとにしている）
                 cv2.putText(img, re_text_path, (0, 150), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 3, 8)
                 cv2.putText(img, re_text_step, (0, 200), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 3, 8)
                 cv2.putText(img, re_text_cal, (0, 250), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 0), 3, 8)
+
+                # 歩いた状態によって出てくるメッセージを変える
                 if(raise_leg_sum//count < 0.8):
                     re_text1 = " Raise your legs and cheerfully!"
                     re_text2 = " Take more exercise and have a good day!"
