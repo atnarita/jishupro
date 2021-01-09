@@ -138,7 +138,7 @@ def step():
     sigma_z = np.std(acc_array[-5:,2])
     acc_ave = np.average(acc_array[-3:,0])
 
-    if (math.sqrt(sigma_z**2 + sigma_y**2 + sigma_z**2) >= 0.5) and (acc_ave > 0) and (acc_ave > 1) and step_flag == 0:
+    if (math.sqrt(sigma_z**2 + sigma_y**2 + sigma_z**2) >= 0.5) and (acc_ave > 0) and (acc_ave > 0.6) and step_flag == 0:
         step_num += 1
         step_flag = 1
     if acc_array[-1,0] < 0:
@@ -302,18 +302,21 @@ def main():
             edge = cv2.Canny(gray, 50,110)
             lines = cv2.HoughLinesP(edge,rho=1,theta=np.pi/180, threshold=20, minLineLength=100,maxLineGap=50)
 
-            # 水平線検出する
-            cnt = 0
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                if abs(y1-y2) < 30 and (x1-x2)**2+(y1-y2)**2 > 300**2 and 330<y1 and y1<430:
-                    red_lines_img = cv2.line(frame, (x1,y1), (x2,y2), (0,0,255), 3)
-                    cv2.putText(frame, "Take Care!", (100, 450), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 255), 5, 8)
-                    print("\007")
-                    break
-                if cnt ==10:
-                    break
-                cnt += 1
+            if lines is None:
+                pass
+            else:
+                # 水平線検出する
+                cnt = 0
+                for line in lines:
+                    x1, y1, x2, y2 = line[0]
+                    if abs(y1-y2) < 30 and (x1-x2)**2+(y1-y2)**2 > 300**2 and 360<y1 and y1<400:
+                        red_lines_img = cv2.line(frame, (x1,y1), (x2,y2), (0,0,255), 3)
+                        cv2.putText(frame, "Take Care!", (100, 450), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 255), 5, 8)
+                        print("\007")
+                        break
+                    if cnt ==10:
+                        break
+                    cnt += 1
 
             # Numerical Integration (NI) と　Nural Network (NN) の結果を表示する
             noti_text_ni = " NI : "+str(((speed_list[2]*3.4)//0.1)/10) + "[km/h] " + str((distance_list[2]//0.1)/10) + "m "

@@ -8,7 +8,7 @@ unsigned long previousMillius = 0;
 void setup()
 {
   Serial.begin(9600);
-  Serial.println("start");
+  //Serial.println("start");
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
